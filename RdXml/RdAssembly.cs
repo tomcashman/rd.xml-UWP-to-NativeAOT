@@ -35,13 +35,25 @@ namespace RdXml
             {
                 xmlElement.SetAttribute(ATTRIBUTE_DYNAMIC, VALUE_REQUIRED_ALL);
             }
-            if(HasMarshalDelegateAttribute || HasMarshalStructureAttribute)
+            if (HasMarshalStructureAttribute)
+            {
+                xmlElement.SetAttribute(RdElement.ATTRIBUTE_MARSHAL_STRUCTURE, "Required All");
+            }
+            if (HasMarshalDelegateAttribute || HasMarshalStructureAttribute)
             {
                 IEnumerable<Type> delegates = AppDomain.CurrentDomain.GetAssemblies()
                         .SelectMany(t => t.GetTypes())
-                        .Where(t => !t.IsClass && t.Assembly.FullName == assemblyName);
+                        .Where(t => typeof(Delegate).IsAssignableFrom(t) && t.Assembly.FullName == assemblyName);
                 foreach (Type type in delegates)
                 {
+                    if (type.IsGenericParameter)
+                    {
+                        continue;
+                    }
+                    if (IsCompilerGenerated(type))
+                    {
+                        continue;
+                    }
                     if (!writtenTypes.Add(type))
                     {
                         continue;
@@ -51,10 +63,6 @@ namespace RdXml
                     if (HasMarshalDelegateAttribute)
                     {
                         delegateElement.SetAttribute(RdElement.ATTRIBUTE_MARSHAL_DELEGATE, "Required All");
-                    }
-                    if (HasMarshalStructureAttribute)
-                    {
-                        delegateElement.SetAttribute(RdElement.ATTRIBUTE_MARSHAL_STRUCTURE, "Required All");
                     }
                     xmlElement.AppendChild(delegateElement);
                 }

@@ -9,8 +9,10 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using System.Xml;
+using System.Linq;
 
 namespace RdXml
 {
@@ -24,7 +26,19 @@ namespace RdXml
 
         public override void WriteNativeAOT(XmlDocument result, XmlElement parentElement, HashSet<Type> writtenTypes)
         {
-            throw new NotImplementedException();
+            RdType parentTypeElement = (RdType)Parent;
+            string typeName = parentTypeElement.TypeName;
+            Type parentType = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(t => t.GetTypes())
+                .Where(t => t.FullName == typeName).First();
+            AppendType(result, parentElement, writtenTypes, parentType, true, false, false);
+
+            PropertyInfo propertyInfo = parentType.GetProperty(XmlElement.GetAttribute(ATTRIBUTE_NAME));
+            if(propertyInfo == null)
+            {
+                return;
+            }
+            AppendType(result, parentElement, writtenTypes, propertyInfo.PropertyType, true, false, false);
         }
     }
 }

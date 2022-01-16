@@ -47,6 +47,22 @@ namespace RdXml
             result.Save(outputStream);
         }
 
+        public void WriteNativeAOT(TextWriter textWriter)
+        {
+            XmlDocument result = new XmlDocument();
+            HashSet<Type> writtenTypes = new HashSet<Type>();
+            WriteNativeAOT(result, result.DocumentElement, writtenTypes);
+            result.Save(textWriter);
+        }
+
+        public void WriteNativeAOT(XmlWriter xmlWriter)
+        {
+            XmlDocument result = new XmlDocument();
+            HashSet<Type> writtenTypes = new HashSet<Type>();
+            WriteNativeAOT(result, result.DocumentElement, writtenTypes);
+            result.Save(xmlWriter);
+        }
+
         public override void WriteNativeAOT(XmlDocument result, XmlElement parentElement, HashSet<Type> writtenTypes)
         {
             XmlElement rootElement = result.CreateElement(ELEMENT_TAG);

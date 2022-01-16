@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml;
+using System.Linq;
 
 namespace RdXml
 {
@@ -46,6 +47,39 @@ namespace RdXml
         public override void WriteNativeAOT(XmlDocument xmlDocument, XmlElement parentElement, HashSet<Type> writtenTypes)
         {
             base.WriteNativeAOT(xmlDocument, parentElement, writtenTypes);
+            WriteNativeAOTSubTypes(xmlDocument, parentElement, writtenTypes);
+            WriteNativeAOTAttributeImplies(xmlDocument, parentElement, writtenTypes);
+            WriteNativeAOTGenericParameters(xmlDocument, parentElement, writtenTypes);
+        }
+
+        public void WriteNativeAOTSubTypes(XmlDocument xmlDocument, XmlElement parentElement, HashSet<Type> writtenTypes)
+        {
+            if(SubTypes == null)
+            {
+                return;
+            }
+            SubTypes.WriteNativeAOT(xmlDocument, parentElement, writtenTypes);
+        }
+
+        public void WriteNativeAOTAttributeImplies(XmlDocument xmlDocument, XmlElement parentElement, HashSet<Type> writtenTypes)
+        {
+            if(AttributeImplies == null)
+            {
+                return;
+            }
+            AttributeImplies.WriteNativeAOT(xmlDocument, parentElement, writtenTypes);
+        }
+
+        public void WriteNativeAOTGenericParameters(XmlDocument xmlDocument, XmlElement parentElement, HashSet<Type> writtenTypes)
+        {
+            foreach(RdGenericParameter genericParameter in GenericParameters)
+            {
+                if(genericParameter == null)
+                {
+                    continue;
+                }
+                genericParameter.WriteNativeAOT(xmlDocument, parentElement, writtenTypes);
+            }
         }
     }
 }

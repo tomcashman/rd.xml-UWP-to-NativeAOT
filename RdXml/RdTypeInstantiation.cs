@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml;
+using System.Linq;
 
 namespace RdXml
 {
@@ -74,12 +75,27 @@ namespace RdXml
         public override void WriteNativeAOT(XmlDocument xmlDocument, XmlElement parentElement, HashSet<Type> writtenTypes)
         {
             string typeName = TypeName;
-            Type resolvedType = Type.GetType(typeName);
+            Type resolvedType = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(t => t.GetTypes())
+                .Where(t => t.FullName == typeName).First();
             if (writtenTypes.Add(resolvedType))
             {
-                XmlElement xmlElement = xmlDocument.CreateElement(ELEMENT_TAG);
-                xmlElement.SetAttribute(ATTRIBUTE_NAME, TypeName);
-                xmlDocument.AppendChild(xmlElement);
+                XmlElement xmlElement;
+
+                if(!(this is RdType))
+                {
+                    //TypeInstantiation has additional Arguments field
+                    //TODO: Implement Arguments field support
+                    xmlElement = xmlDocument.CreateElement(XmlElement.LocalName);
+                    xmlElement.SetAttribute(ATTRIBUTE_NAME, TypeName);
+                    parentElement.AppendChild(xmlElement);
+                }
+                else
+                {
+                    xmlElement = xmlDocument.CreateElement(XmlElement.LocalName);
+                    xmlElement.SetAttribute(ATTRIBUTE_NAME, TypeName);
+                    parentElement.AppendChild(xmlElement);
+                }
 
                 if (HasReflectAttribute)
                 {
@@ -93,6 +109,35 @@ namespace RdXml
                 {
                     xmlElement.SetAttribute(RdElement.ATTRIBUTE_MARSHAL_STRUCTURE, VALUE_REQUIRED_ALL);
                 }
+            }
+
+            foreach (RdType type in Types)
+            {
+                type.WriteNativeAOT(xmlDocument, parentElement, writtenTypes);
+            }
+            foreach (RdTypeInstantiation typeInstantiation in TypeInstantiations)
+            {
+                typeInstantiation.WriteNativeAOT(xmlDocument, parentElement, writtenTypes);
+            }
+            foreach (RdMethod method in Methods)
+            {
+                method.WriteNativeAOT(xmlDocument, parentElement, writtenTypes);
+            }
+            foreach (RdMethodInstantiation methodInstantiation in MethodInstantiations)
+            {
+                methodInstantiation.WriteNativeAOT(xmlDocument, parentElement, writtenTypes);
+            }
+            foreach (RdProperty property in Properties)
+            {
+                property.WriteNativeAOT(xmlDocument, parentElement, writtenTypes);
+            }
+            foreach (RdField field in Fields)
+            {
+                field.WriteNativeAOT(xmlDocument, parentElement, writtenTypes);
+            }
+            foreach (RdEvent @event in Events)
+            {
+                @event.WriteNativeAOT(xmlDocument, parentElement, writtenTypes);
             }
         }
 
@@ -109,6 +154,30 @@ namespace RdXml
                     {
                         result.Append(parentNamespace);
                         if (!parentNamespace.EndsWith("."))
+                        {
+                            result.Append('.');
+                        }
+                    }
+                }
+                else if (Parent is RdType type)
+                {
+                    string parentTypeName = type.TypeName;
+                    if (!thisName.StartsWith(parentTypeName))
+                    {
+                        result.Append(parentTypeName);
+                        if (!parentTypeName.EndsWith("."))
+                        {
+                            result.Append('.');
+                        }
+                    }
+                }
+                else if (Parent is RdTypeInstantiation typeInstantiation)
+                {
+                    string parentTypeName = typeInstantiation.TypeName;
+                    if (!thisName.StartsWith(parentTypeName))
+                    {
+                        result.Append(parentTypeName);
+                        if (!parentTypeName.EndsWith("."))
                         {
                             result.Append('.');
                         }

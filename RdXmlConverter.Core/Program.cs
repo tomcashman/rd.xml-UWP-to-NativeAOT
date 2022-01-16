@@ -8,6 +8,7 @@
  * See LICENSE file
  */
 using CommandLine;
+using RdXml;
 using System;
 using System.IO;
 using System.Reflection;
@@ -45,11 +46,18 @@ namespace RdXmlConverter
                 Assembly.LoadFrom(dllFilename);
             }
 
-            XmlDocument doc = new XmlDocument();
-            doc.PreserveWhitespace = true;
-            doc.Load(options.InputRdXml);
+            XmlWriterSettings xmlWriterSettings = new XmlWriterSettings();
+            xmlWriterSettings.Indent = true;
+            xmlWriterSettings.OmitXmlDeclaration = true;
 
+            XmlDocument xmlDocument = new XmlDocument();
+            xmlDocument.PreserveWhitespace = true;
+            xmlDocument.Load(options.InputRdXml);
 
+            RdDirective directive = new RdDirective(xmlDocument);
+            StringWriter result = new StringWriter();
+            directive.WriteNativeAOT(XmlWriter.Create(result, xmlWriterSettings));
+            File.WriteAllText(options.OutputRdXml, result.ToString());
         }
     }
 }

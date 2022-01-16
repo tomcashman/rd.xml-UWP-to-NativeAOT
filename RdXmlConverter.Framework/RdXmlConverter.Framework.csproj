@@ -7,7 +7,7 @@
     <ProjectGuid>{B4722DD2-7267-4C70-826C-1DABA067797A}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>RdXmlConverter.Framework</RootNamespace>
-    <AssemblyName>RdXmlConverter.Framework</AssemblyName>
+    <AssemblyName>RdXmlConverter</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

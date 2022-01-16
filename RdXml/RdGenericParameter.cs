@@ -24,7 +24,7 @@ namespace RdXml
 
         public override void WriteNativeAOT(XmlDocument result, XmlElement parentElement, HashSet<Type> writtenTypes)
         {
-            throw new NotImplementedException();
+            //TODO: How to resolve this? Scan everything?
         }
     }
 }

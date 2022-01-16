@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml;
+using System.Linq;
 
 namespace RdXml
 {
@@ -22,9 +23,23 @@ namespace RdXml
         {
         }
 
-        public override void WriteNativeAOT(XmlDocument result, XmlElement parentElement, HashSet<Type> writtenTypes)
+        public override void WriteNativeAOT(XmlDocument xmlDocument, XmlElement parentElement, HashSet<Type> writtenTypes)
         {
-            throw new NotImplementedException();
+            RdType parentTypeElement = (RdType)Parent;
+            string typeName = parentTypeElement.TypeName;
+            Type resolvedType = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(t => t.GetTypes())
+                .Where(t => t.FullName == typeName).First();
+            IEnumerable<Type> subtypes = AppDomain.CurrentDomain.GetAssemblies()
+                                    .SelectMany(t => t.GetTypes())
+                                    .Where(t => resolvedType.IsAssignableFrom(t));
+            foreach (Type subtype in subtypes)
+            {
+                AppendType(xmlDocument, parentElement, writtenTypes, subtype, 
+                    HasReflectAttribute, 
+                    HasMarshalDelegateAttribute, 
+                    HasMarshalStructureAttribute);
+            }
         }
     }
 }

@@ -72,17 +72,25 @@ namespace RdXml
             {
                 classes = AppDomain.CurrentDomain.GetAssemblies()
                     .SelectMany(t => t.GetTypes())
-                    .Where(t => t.IsClass && t.Namespace == namespaceName && t.Assembly.FullName == assemblyName);
+                    .Where(t => !typeof(Delegate).IsAssignableFrom(t) && t.Namespace == namespaceName && t.Assembly.FullName == assemblyName);
             }
             else
             {
                 classes = AppDomain.CurrentDomain.GetAssemblies()
                     .SelectMany(t => t.GetTypes())
-                    .Where(t => t.IsClass && t.Namespace == namespaceName);
+                    .Where(t => !typeof(Delegate).IsAssignableFrom(t) && t.Namespace == namespaceName);
             }
 
             foreach (Type type in classes)
             {
+                if (type.IsGenericParameter)
+                {
+                    continue;
+                }
+                if (IsCompilerGenerated(type))
+                {
+                    continue;
+                }
                 if (!writtenTypes.Add(type))
                 {
                     continue;
@@ -93,6 +101,10 @@ namespace RdXml
                 {
                     typeElement.SetAttribute(RdElement.ATTRIBUTE_DYNAMIC, VALUE_REQUIRED_ALL);
                 }
+                if (HasMarshalStructureAttribute)
+                {
+                    typeElement.SetAttribute(RdElement.ATTRIBUTE_MARSHAL_STRUCTURE, VALUE_REQUIRED_ALL);
+                }
                 parentElement.AppendChild(typeElement);
             }
         }
@@ -101,9 +113,17 @@ namespace RdXml
         {
             IEnumerable<Type> delegates = AppDomain.CurrentDomain.GetAssemblies()
                                     .SelectMany(t => t.GetTypes())
-                                    .Where(t => !t.IsClass && t.Namespace == namespaceName);
+                                    .Where(t => typeof(Delegate).IsAssignableFrom(t) && t.Namespace == namespaceName);
             foreach (Type type in delegates)
             {
+                if (type.IsGenericParameter)
+                {
+                    continue;
+                }
+                if (IsCompilerGenerated(type))
+                {
+                    continue;
+                }
                 if (!writtenTypes.Add(type))
                 {
                     continue;
@@ -113,10 +133,6 @@ namespace RdXml
                 if (HasMarshalDelegateAttribute)
                 {
                     delegateElement.SetAttribute(RdElement.ATTRIBUTE_MARSHAL_DELEGATE, VALUE_REQUIRED_ALL);
-                }
-                if (HasMarshalStructureAttribute)
-                {
-                    delegateElement.SetAttribute(RdElement.ATTRIBUTE_MARSHAL_STRUCTURE, VALUE_REQUIRED_ALL);
                 }
                 parentElement.AppendChild(delegateElement);
             }

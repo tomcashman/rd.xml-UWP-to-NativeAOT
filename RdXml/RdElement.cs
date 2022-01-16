@@ -9,6 +9,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml;
 
@@ -38,7 +39,45 @@ namespace RdXml
             XmlElement = xmlElement;
         }
 
-        public abstract void WriteNativeAOT(XmlDocument result, XmlElement parentElement, HashSet<Type> writtenTypes);
+        public abstract void WriteNativeAOT(XmlDocument xmlDocument, XmlElement parentElement, HashSet<Type> writtenTypes);
+
+        protected void AppendType(XmlDocument xmlDocument, XmlElement parentElement, HashSet<Type> writtenTypes,
+            Type type, bool dynamic, bool marshalDelegate, bool marshalStructure)
+        {
+            if(type.IsGenericParameter)
+            {
+                return;
+            }
+            if(IsCompilerGenerated(type))
+            {
+                return;
+            }
+            if(!writtenTypes.Add(type))
+            {
+                return;
+            }
+            XmlElement xmlElement = xmlDocument.CreateElement(RdType.ELEMENT_TAG);
+            xmlElement.SetAttribute(ATTRIBUTE_NAME, type.FullName);
+            parentElement.AppendChild(xmlElement);
+
+            if(dynamic)
+            {
+                xmlElement.SetAttribute(ATTRIBUTE_DYNAMIC, VALUE_REQUIRED_ALL);
+            }
+            if(marshalDelegate)
+            {
+                xmlElement.SetAttribute(ATTRIBUTE_MARSHAL_DELEGATE, VALUE_REQUIRED_ALL);
+            }
+            if(marshalStructure)
+            {
+                xmlElement.SetAttribute(ATTRIBUTE_MARSHAL_STRUCTURE, VALUE_REQUIRED_ALL);
+            }
+        }
+
+        protected bool IsCompilerGenerated(Type type)
+        {
+            return Attribute.GetCustomAttribute(type, typeof(CompilerGeneratedAttribute)) != null;
+        }
 
         public bool HasReflectAttribute
         {
